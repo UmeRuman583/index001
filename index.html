@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Instant Indexer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        
+        .input-section {
+            margin-bottom: 30px;
+        }
+        
+        .input-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            background: #667eea;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.7em;
+            font-weight: normal;
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .link-types {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .link-type {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .link-type h3 {
+            color: #667eea;
+            font-size: 1em;
+            margin-bottom: 5px;
+        }
+        
+        .link-type p {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .button-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .status {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .status.show {
+            display: block;
+        }
+        
+        .status.loading {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            color: #856404;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .results {
+            margin-top: 20px;
+        }
+        
+        .result-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .result-item.success {
+            border-left-color: #28a745;
+        }
+        
+        .result-item.failed {
+            border-left-color: #dc3545;
+        }
+        
+        .url {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #333;
+            word-break: break-all;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            gap: 20px;
+        }
+        
+        .stat {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            flex: 1;
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .info-box {
+            background: #e7f3ff;
+            border: 2px solid #2196F3;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .info-box h3 {
+            color: #1976D2;
+            margin-bottom: 10px;
+        }
+        
+        .info-box ul {
+            margin-left: 20px;
+            color: #333;
+        }
+        
+        .info-box li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ Google Instant Indexer</h1>
+            <p>Index your URLs on Google in seconds - All link types supported</p>
+        </div>
+        
+        <div class="card">
+            <div class="link-types">
+                <div class="link-type">
+                    <h3>📄 HTML Pages</h3>
+                    <p>Web pages, blogs</p>
+                </div>
+                <div class="link-type">
+                    <h3>📑 PDF Files</h3>
+                    <p>Documents, guides</p>
+                </div>
+                <div class="link-type">
+                    <h3>💬 Forum Links</h3>
+                    <p>Threads, posts</p>
+                </div>
+                <div class="link-type">
+                    <h3>🌐 Web 2.0</h3>
+                    <p>Medium, WordPress</p>
+                </div>
+                <div class="link-type">
+                    <h3>🔗 Tier 1/2/3</h3>
+                    <p>All backlink tiers</p>
+                </div>
+            </div>
+            
+            <div class="input-section">
+                <h2>Enter URLs to Index <span class="badge">One per line</span></h2>
+                <textarea id="urlInput" placeholder="https://example.com/page1.html
+https://example.com/document.pdf
+https://forum.example.com/thread/123
+https://medium.com/@user/post
+https://tier1-backlink.com/link"></textarea>
+            </div>
+            
+            <div class="info-box">
+                <h3>💡 Quick Tips</h3>
+                <ul>
+                    <li>Paste one URL per line</li>
+                    <li>Supports unlimited URLs (processes in batches)</li>
+                    <li>Indexing typically completes in 2-10 minutes</li>
+                    <li>All link types are supported (HTML, PDF, Forum, Web 2.0, Backlinks)</li>
+                </ul>
+            </div>
+            
+            <div class="button-container">
+                <button id="indexBtn" onclick="startIndexing()">
+                    🚀 Start Instant Indexing
+                </button>
+            </div>
+            
+            <div id="status" class="status"></div>
+            
+            <div id="results" class="results" style="display: none;"></div>
+        </div>
+    </div>
+    
+    <script>
+        let checkInterval = null;
+        
+        function startIndexing() {
+            const urls = document.getElementById('urlInput').value;
+            const urlList = urls.split('\n').filter(u => u.trim());
+            
+            if (urlList.length === 0) {
+                showStatus('error', '❌ Please enter at least one URL');
+                return;
+            }
+            
+            document.getElementById('indexBtn').disabled = true;
+            showStatus('loading', `⏳ Indexing ${urlList.length} URLs... Please wait...`);
+            document.getElementById('results').style.display = 'none';
+            
+            fetch('/api/index', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ urls: urlList })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    checkStatus();
+                    checkInterval = setInterval(checkStatus, 2000);
+                } else {
+                    showStatus('error', '❌ ' + data.message);
+                    document.getElementById('indexBtn').disabled = false;
+                }
+            })
+            .catch(error => {
+                showStatus('error', '❌ Error: ' + error.message);
+                document.getElementById('indexBtn').disabled = false;
+            });
+        }
+        
+        function checkStatus() {
+            fetch('/api/status')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'complete') {
+                    clearInterval(checkInterval);
+                    showResults(data);
+                    document.getElementById('indexBtn').disabled = false;
+                } else if (data.status === 'indexing') {
+                    // Still processing
+                }
+            });
+        }
+        
+        function showStatus(type, message) {
+            const status = document.getElementById('status');
+            status.className = 'status show ' + type;
+            
+            if (type === 'loading') {
+                status.innerHTML = '<span class="spinner"></span>' + message;
+            } else {
+                status.innerHTML = message;
+            }
+        }
+        
+        function showResults(data) {
+            showStatus('success', `✅ Indexing Complete! Processed ${data.total} URLs`);
+            
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.style.display = 'block';
+            
+            let html = '<div class="stats">';
+            html += `<div class="stat">
+                        <div class="stat-value">${data.total}</div>
+                        <div class="stat-label">Total URLs</div>
+                     </div>`;
+            html += `<div class="stat">
+                        <div class="stat-value" style="color: #28a745;">${data.successful}</div>
+                        <div class="stat-label">Successful</div>
+                     </div>`;
+            html += `<div class="stat">
+                        <div class="stat-value" style="color: #dc3545;">${data.failed}</div>
+                        <div class="stat-label">Failed</div>
+                     </div>`;
+            html += '</div>';
+            
+            html += '<h3 style="margin: 20px 0;">Indexing Details:</h3>';
+            
+            data.results.forEach(result => {
+                const url = result.url;
+                const success = result.methods_used && result.methods_used.some(m => m.status === 'success');
+                const cssClass = success ? 'success' : 'failed';
+                const icon = success ? '✅' : '❌';
+                
+                html += `<div class="result-item ${cssClass}">
+                            ${icon} <span class="url">${url}</span>
+                         </div>`;
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
